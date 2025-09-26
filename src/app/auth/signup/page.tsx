@@ -76,28 +76,6 @@ export default function SignupPage() {
 
   return (
     <TooltipProvider>
-       <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">Signup Disabled</CardTitle>
-          <CardDescription className="text-center">
-            User registration is temporarily disabled.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-           <p className="text-sm text-muted-foreground text-center">
-            The authentication system is currently undergoing maintenance. Please check back later.
-           </p>
-        </CardContent>
-         <CardFooter className="flex flex-col gap-4">
-            <p className="text-center text-sm text-muted-foreground">
-              Already have an account?{' '}
-              <Link href="/auth/login" className="underline">
-                Login
-              </Link>
-            </p>
-        </CardFooter>
-      </Card>
-      {/*
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl text-center">Sign Up</CardTitle>
@@ -162,7 +140,6 @@ export default function SignupPage() {
             </p>
         </CardFooter>
       </Card>
-      */}
     </TooltipProvider>
   );
 }

@@ -22,13 +22,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // To enable testing, we are temporarily disabling the authentication check.
   // If trying to access a protected page while not logged in, redirect to login
-  /*
   if (!sessionCookie && protectedRoutes.includes(pathname)) {
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
-  */
 
   return NextResponse.next();
 }
