@@ -1,8 +1,7 @@
-
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
-import { signup } from '@/app/auth/actions';
+import { useActionState, useEffect, useState, useTransition } from 'react';
+import { signup, login } from '@/app/auth/actions';
 import type { AuthState } from '@/app/auth/actions';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,20 +18,20 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Smartphone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { auth } from '@/lib/firebase';
+import { 
+  GoogleAuthProvider, 
+  signInWithPopup,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  createUserWithEmailAndPassword,
+  updateProfile
+} from 'firebase/auth';
 
 const initialState: AuthState = {
   success: false,
   message: '',
 };
-
-function SubmitButton({ pending }: { pending: boolean }) {
-  return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? 'Creating Account...' : 'Create an account'}
-    </Button>
-  );
-}
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -50,7 +49,14 @@ export default function SignupPage() {
   const [state, formAction] = useActionState(signup, initialState);
   const router = useRouter();
   const { toast } = useToast();
-  const [pending, setPending] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [phoneAuthState, setPhoneAuthState] = useState<'idle' | 'otp-sent' | 'verifying'>('idle');
+  const [loginState, setLoginState] = useState<AuthState>(initialState);
+
   
   useEffect(() => {
     if (state.success) {
@@ -68,68 +74,161 @@ export default function SignupPage() {
     }
   }, [state, router, toast]);
 
-  const handleFormSubmit = async (formData: FormData) => {
-    setPending(true);
-    await formAction(formData);
-    setPending(false);
+    useEffect(() => {
+    if (loginState.success) {
+      toast({
+        title: 'Login Successful!',
+        description: loginState.message,
+      });
+      router.replace('/');
+    } else if (loginState.message) {
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: loginState.message,
+      });
+    }
+  }, [loginState, router, toast]);
+
+  const handleServerLogin = async (idToken: string) => {
+    const result = await login(idToken);
+    setLoginState(result);
   }
 
+  const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    startTransition(async () => {
+      await formAction(formData);
+    });
+  }
+
+    const handleGoogleSignIn = () => {
+    startTransition(async () => {
+      try {
+        const provider = new GoogleAuthProvider();
+        const userCredential = await signInWithPopup(auth, provider);
+        const idToken = await userCredential.user.getIdToken();
+        await handleServerLogin(idToken);
+      } catch (error: any) {
+        setLoginState({ success: false, message: error.message || 'Google sign-up failed.' });
+      }
+    });
+  };
+  
+  const generateRecaptcha = () => {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': (response: any) => {}
+      });
+    }
+  }
+
+  const handlePhoneSignIn = (e: React.FormEvent) => {
+    e.preventDefault();
+    startTransition(async () => {
+      setPhoneAuthState('verifying');
+      generateRecaptcha();
+      const appVerifier = window.recaptchaVerifier;
+      try {
+        const result = await signInWithPhoneNumber(auth, `+${phone}`, appVerifier);
+        setConfirmationResult(result);
+        setPhoneAuthState('otp-sent');
+        toast({ title: "OTP Sent!", description: `An OTP has been sent to +${phone}` });
+      } catch (error: any) {
+        setPhoneAuthState('idle');
+        setLoginState({ success: false, message: error.message || "Failed to send OTP." });
+      }
+    });
+  }
+
+  const handleOtpVerify = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!confirmationResult) return;
+    startTransition(async () => {
+      try {
+        const userCredential = await confirmationResult.confirm(otp);
+        if (userCredential.user) {
+            await updateProfile(userCredential.user, { displayName: `User${phone.slice(-4)}` });
+        }
+        const idToken = await userCredential.user.getIdToken();
+        await handleServerLogin(idToken);
+      } catch (error: any) {
+         setLoginState({ success: false, message: error.message || "Invalid OTP." });
+      }
+    });
+  }
+
+
   return (
-    <TooltipProvider>
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl text-center">Sign Up</CardTitle>
           <CardDescription className="text-center">
-              Create your account using your email and password.
+              Create an account to get started.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <form action={handleFormSubmit} className="grid gap-4">
-              <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" name="email" type="email" placeholder="m@example.com" required />
-              </div>
-              <div className="grid gap-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input id="password" name="password" type="password" required />
-              </div>
-              <SubmitButton pending={pending} />
-          </form>
+          {phoneAuthState === 'idle' ? (
+            <>
+              <form onSubmit={handleFormSubmit} className="grid gap-4">
+                  <div className="grid gap-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" name="email" type="email" placeholder="m@example.com" required />
+                  </div>
+                  <div className="grid gap-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input id="password" name="password" type="password" required />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={pending}>
+                    {pending ? 'Creating Account...' : 'Create an account'}
+                  </Button>
+              </form>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" disabled>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Button variant="outline" onClick={handleGoogleSignIn} disabled={pending}>
                   <GoogleIcon className="mr-2 h-5 w-5" />
                   Google
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Coming soon!</p>
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" disabled>
+                <Button variant="outline" onClick={() => setPhoneAuthState('otp-sent')} disabled={pending}>
                   <Smartphone className="mr-2 h-5 w-5" />
                   Phone
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Coming soon!</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
+              </div>
+            </>
+          ) : (
+             <form onSubmit={phoneAuthState === 'otp-sent' ? handleOtpVerify : handlePhoneSignIn} className="grid gap-4">
+                {phoneAuthState !== 'otp-sent' ? (
+                   <div className="grid gap-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input id="phone" name="phone" type="tel" placeholder="1234567890" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                     <p className="text-xs text-muted-foreground">Include country code without the `+' symbol.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-2">
+                    <Label htmlFor="otp">Verification Code</Label>
+                    <Input id="otp" name="otp" type="text" placeholder="123456" value={otp} onChange={(e) => setOtp(e.target.value)} required />
+                  </div>
+                )}
+              <Button type="submit" className="w-full" disabled={pending}>
+                  {pending ? 'Verifying...' : (phoneAuthState === 'otp-sent' ? 'Verify OTP & Sign Up' : 'Send OTP')}
+              </Button>
+              <Button variant="link" size="sm" onClick={() => { setPhoneAuthState('idle'); setPhone(''); setOtp(''); }}>
+                Back to other signup methods
+              </Button>
+            </form>
+          )}
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
             <p className="text-center text-sm text-muted-foreground">
@@ -139,7 +238,7 @@ export default function SignupPage() {
               </Link>
             </p>
         </CardFooter>
+        <div id="recaptcha-container"></div>
       </Card>
-    </TooltipProvider>
   );
 }
