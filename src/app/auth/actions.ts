@@ -22,6 +22,7 @@ const loginSchema = z.object({
 });
 
 const profileUpdateSchema = z.object({
+  uid: z.string(),
   displayName: z.string().optional(),
   photoURL: z.string().url().optional(),
 });
@@ -114,19 +115,20 @@ export async function updateUserProfile(data: {
   if (!auth) {
     return { success: false, message: 'Admin authentication is not configured. Please ensure the FIREBASE_SERVICE_ACCOUNT_KEY is set in your environment variables.' };
   }
-  const { uid, ...profileData } = data;
-  const result = profileUpdateSchema.safeParse(profileData);
+  const result = profileUpdateSchema.safeParse(data);
 
   if (!result.success) {
     return { success: false, message: result.error.errors.map((e) => e.message).join(' ') };
   }
+
+  const { uid, ...profileData } = result.data;
 
   if (!uid) {
     return { success: false, message: 'User not authenticated.' };
   }
 
   try {
-    await auth.updateUser(uid, result.data);
+    await auth.updateUser(uid, profileData);
     return { success: true, message: 'Profile updated successfully.' };
   } catch (error) {
     console.error("Update profile error:", error);

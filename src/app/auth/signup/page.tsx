@@ -24,7 +24,6 @@ import {
   signInWithPopup,
   RecaptchaVerifier,
   signInWithPhoneNumber,
-  createUserWithEmailAndPassword,
   updateProfile
 } from 'firebase/auth';
 
@@ -49,12 +48,12 @@ export default function SignupPage() {
   const [state, formAction] = useActionState(signup, initialState);
   const router = useRouter();
   const { toast } = useToast();
-  const [pending, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
-  const [phoneAuthState, setPhoneAuthState] = useState<'idle' | 'otp-sent' | 'verifying'>('idle');
+  const [phoneAuthState, setPhoneAuthState] = useState<'idle' | 'verifying' | 'otp-sent'>('idle');
   const [loginState, setLoginState] = useState<AuthState>(initialState);
 
   
@@ -95,7 +94,7 @@ export default function SignupPage() {
     setLoginState(result);
   }
 
-  const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     startTransition(async () => {
@@ -149,8 +148,9 @@ export default function SignupPage() {
     startTransition(async () => {
       try {
         const userCredential = await confirmationResult.confirm(otp);
-        if (userCredential.user) {
-            await updateProfile(userCredential.user, { displayName: `User${phone.slice(-4)}` });
+        // Set a default display name for phone users
+        if (userCredential.user && !userCredential.user.displayName) {
+            await updateProfile(userCredential.user, { displayName: `User ${phone.slice(-4)}` });
         }
         const idToken = await userCredential.user.getIdToken();
         await handleServerLogin(idToken);
@@ -181,8 +181,8 @@ export default function SignupPage() {
                       <Label htmlFor="password">Password</Label>
                       <Input id="password" name="password" type="password" required />
                   </div>
-                  <Button type="submit" className="w-full" disabled={pending}>
-                    {pending ? 'Creating Account...' : 'Create an account'}
+                  <Button type="submit" className="w-full" disabled={isPending}>
+                    {isPending ? 'Creating Account...' : 'Create an account'}
                   </Button>
               </form>
 
@@ -197,11 +197,11 @@ export default function SignupPage() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" onClick={handleGoogleSignIn} disabled={pending}>
+                <Button variant="outline" onClick={handleGoogleSignIn} disabled={isPending}>
                   <GoogleIcon className="mr-2 h-5 w-5" />
                   Google
                 </Button>
-                <Button variant="outline" onClick={() => setPhoneAuthState('otp-sent')} disabled={pending}>
+                <Button variant="outline" onClick={() => setPhoneAuthState('verifying')} disabled={isPending}>
                   <Smartphone className="mr-2 h-5 w-5" />
                   Phone
                 </Button>
@@ -209,7 +209,7 @@ export default function SignupPage() {
             </>
           ) : (
              <form onSubmit={phoneAuthState === 'otp-sent' ? handleOtpVerify : handlePhoneSignIn} className="grid gap-4">
-                {phoneAuthState !== 'otp-sent' ? (
+                {phoneAuthState === 'verifying' ? (
                    <div className="grid gap-2">
                     <Label htmlFor="phone">Phone Number</Label>
                     <Input id="phone" name="phone" type="tel" placeholder="1234567890" value={phone} onChange={(e) => setPhone(e.target.value)} required />
@@ -221,8 +221,8 @@ export default function SignupPage() {
                     <Input id="otp" name="otp" type="text" placeholder="123456" value={otp} onChange={(e) => setOtp(e.target.value)} required />
                   </div>
                 )}
-              <Button type="submit" className="w-full" disabled={pending}>
-                  {pending ? 'Verifying...' : (phoneAuthState === 'otp-sent' ? 'Verify OTP & Sign Up' : 'Send OTP')}
+              <Button type="submit" className="w-full" disabled={isPending}>
+                  {isPending ? 'Verifying...' : (phoneAuthState === 'otp-sent' ? 'Verify OTP & Sign Up' : 'Send OTP')}
               </Button>
               <Button variant="link" size="sm" onClick={() => { setPhoneAuthState('idle'); setPhone(''); setOtp(''); }}>
                 Back to other signup methods

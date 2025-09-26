@@ -61,7 +61,6 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
-
   const [state, setState] = useState<AuthState>(initialLoginState);
   
   const [phone, setPhone] = useState('');
@@ -83,6 +82,8 @@ export default function LoginPage() {
         title: 'Login Failed',
         description: state.message,
       });
+       // Reset state to allow user to try again
+      setState(initialLoginState);
     }
   }, [state, router, toast]);
 
@@ -104,16 +105,13 @@ export default function LoginPage() {
         try {
           userCredential = await signInWithEmailAndPassword(auth, email, password);
         } catch (error: any) {
+          // Special case for admin: create account on first login
           if (email === 'admin@mannan.app' && error.code === 'auth/user-not-found') {
-            userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            await signInWithEmailAndPassword(auth, email, password);
-            const freshUser = auth.currentUser;
-            if(freshUser){
-               const idToken = await freshUser.getIdToken();
-               await handleServerLogin(idToken);
-            }
-            return;
+             await createUserWithEmailAndPassword(auth, email, password);
+             // After creation, sign in again to get the user credential
+             userCredential = await signInWithEmailAndPassword(auth, email, password);
           } else {
+            // For all other errors, re-throw to be caught by the outer catch block
             throw error;
           }
         }
@@ -228,7 +226,7 @@ export default function LoginPage() {
                   <GoogleIcon className="mr-2 h-5 w-5" />
                   Google
                 </Button>
-                <Button variant="outline" onClick={() => setPhoneAuthState('otp-sent')} disabled={isPending}>
+                <Button variant="outline" onClick={() => setPhoneAuthState('verifying')} disabled={isPending}>
                   <Smartphone className="mr-2 h-5 w-5" />
                   Phone
                 </Button>
@@ -238,7 +236,7 @@ export default function LoginPage() {
 
           {phoneAuthState !== 'idle' && (
              <form onSubmit={phoneAuthState === 'otp-sent' ? handleOtpVerify : handlePhoneSignIn} className="grid gap-4">
-                {phoneAuthState !== 'otp-sent' ? (
+                {phoneAuthState === 'verifying' ? (
                    <div className="grid gap-2">
                     <Label htmlFor="phone">Phone Number</Label>
                     <Input id="phone" name="phone" type="tel" placeholder="1234567890" value={phone} onChange={(e) => setPhone(e.target.value)} required />
