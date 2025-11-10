@@ -88,7 +88,7 @@ export function ChatInterface() {
               <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
                   <Bot className="h-12 w-12 mb-4" />
                   <p>
-                      Hello! I'm CampusMind, your on-campus companion for mental wellness.
+                      Hello! I'm Mannan, your on-campus companion for mental wellness.
                       <br />
                       How are you feeling today?
                   </p>

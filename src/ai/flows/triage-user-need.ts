@@ -1,3 +1,4 @@
+
 // triage-user-need.ts
 'use server';
 
@@ -51,7 +52,7 @@ const triagePrompt = ai.definePrompt({
   name: 'triagePrompt',
   input: {schema: TriageUserNeedInputSchema},
   output: {schema: TriageUserNeedOutputSchema},
-  prompt: `You are a triage system for CampusMind, a supportive AI friend. Your job is to analyze the user's message to determine if they need help and what kind of help that might be. You do not respond to the user, you only categorize their need.
+  prompt: `You are a triage system for Mannan, a supportive AI friend. Your job is to analyze the user's message to determine if they need help and what kind of help that might be. You do not respond to the user, you only categorize their need.
 
 ### Triage Categories:
 1.  **General Chat:** User is just talking, asking questions, or expressing mild feelings.

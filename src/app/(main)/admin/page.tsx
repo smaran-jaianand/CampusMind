@@ -46,7 +46,7 @@ export default function AdminPage() {
         setLoading(false);
       }
     }
-    if (currentUser?.email === 'admin@campusmind.app') {
+    if (currentUser?.email === 'admin@mannan.app') {
       fetchUsers();
     }
   }, [currentUser]);
@@ -70,7 +70,7 @@ export default function AdminPage() {
   };
 
 
-  if (currentUser?.email !== 'admin@campusmind.app') {
+  if (currentUser?.email !== 'admin@mannan.app') {
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 lg:gap-6 lg:p-6">
          <Card className="w-full max-w-lg text-center">
@@ -94,7 +94,7 @@ export default function AdminPage() {
          <Card className="w-full max-w-lg text-center border-destructive">
             <CardHeader>
                 <CardTitle>An Error Occurred</CardTitle>
-            </CardHeader>
+            </Header>
             <CardContent>
                 <p className='text-destructive'>{error}</p>
             </CardContent>
@@ -156,7 +156,7 @@ export default function AdminPage() {
                        <Switch
                         checked={!user.disabled}
                         onCheckedChange={(checked) => handleUserToggle(user.uid, !checked)}
-                        disabled={user.email === 'admin@campusmind.app'}
+                        disabled={user.email === 'admin@mannan.app'}
                       />
                     </TableCell>
                   </TableRow>

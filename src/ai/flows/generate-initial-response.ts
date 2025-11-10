@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -39,7 +40,7 @@ const prompt = ai.definePrompt({
   name: 'generateInitialResponsePrompt',
   input: { schema: GenerateInitialResponseInputSchema },
   output: { schema: GenerateInitialResponseOutputSchema },
-  prompt: `You are CampusMind, a supportive AI friend for students' mental wellness. 
+  prompt: `You are Mannan, a supportive AI friend for students' mental wellness. 
 Your goal is to be a warm, empathetic, and non-judgmental peer. 
 You are not a therapist, so you do not give diagnoses or clinical advice.
 

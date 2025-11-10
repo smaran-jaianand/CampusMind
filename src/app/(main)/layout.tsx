@@ -45,7 +45,7 @@ export default function MainLayout({
 }) {
   const { user } = useAuth();
   const pathname = usePathname();
-  const isAdmin = user?.email === 'admin@campusmind.app';
+  const isAdmin = user?.email === 'admin@mannan.app';
 
   return (
     <SidebarProvider>
@@ -54,7 +54,7 @@ export default function MainLayout({
           <div className="flex w-full items-center justify-between p-2">
             <Link href="/chat" className="flex items-center gap-2">
               <Logo className="h-8 w-8 text-primary" />
-              <span className="font-headline text-xl">CampusMind</span>
+              <span className="font-headline text-xl">Mannan</span>
             </Link>
             <ThemeToggle />
           </div>
@@ -98,7 +98,7 @@ export default function MainLayout({
         <header className="flex h-14 w-full items-center justify-between border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
           <Link href="/chat" className="flex items-center gap-2">
             <Logo className="h-6 w-6 text-primary" />
-            <span className="font-headline text-lg">CampusMind</span>
+            <span className="font-headline text-lg">Mannan</span>
           </Link>
           <SidebarTrigger>
             <PanelLeft />
