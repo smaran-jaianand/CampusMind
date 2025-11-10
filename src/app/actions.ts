@@ -71,7 +71,7 @@ export async function sendSupportEmail(formData: FormData): Promise<{success: bo
 
   try {
     await transporter.sendMail({
-      from: `"Mannan Support" <${process.env.SMTP_USER}>`, // sender address
+      from: `"CampusMind Support" <${process.env.SMTP_USER}>`, // sender address
       to: toEmail, // list of receivers
       subject: subject, // Subject line
       text: finalBody, // plain text body

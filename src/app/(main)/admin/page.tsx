@@ -25,7 +25,7 @@ async function getUsers() {
           uid: user.uid,
           name: user.displayName || 'No Name',
           email: user.email!,
-          role: user.email === 'admin@mannan.app' ? 'Admin' : 'User',
+          role: user.email === 'admin@campusmind.app' ? 'Admin' : 'User',
           status: user.disabled ? 'Inactive' : 'Active',
           avatar: user.photoURL || `https://picsum.photos/seed/${user.uid}/40/40`,
         }));

@@ -195,7 +195,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <Logo className="h-8 w-8 text-primary" />
-              <span className="font-headline text-lg">Mannan</span>
+              <span className="font-headline text-lg">CampusMind</span>
             </Link>
           </div>
           <div className="flex-1 overflow-y-auto">
@@ -224,7 +224,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                   className="flex items-center gap-2 font-semibold"
                 >
                   <Logo className="h-8 w-8 text-primary" />
-                  <span className="font-headline text-lg">Mannan</span>
+                  <span className="font-headline text-lg">CampusMind</span>
                 </Link>
               </div>
               <div className="mt-4 flex-1 overflow-y-auto">
@@ -237,7 +237,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </Sheet>
            <div className="flex items-center gap-2 font-semibold">
               <Logo className="h-8 w-8 text-primary md:hidden" />
-              <span className="font-headline text-lg md:hidden">Mannan</span>
+              <span className="font-headline text-lg md:hidden">CampusMind</span>
             </div>
              <div className="ml-auto">
                 <EmergencyDialog isMobile={true} />

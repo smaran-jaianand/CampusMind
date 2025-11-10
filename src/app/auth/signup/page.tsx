@@ -57,108 +57,108 @@ export default function SignupPage() {
   const [loginState, setLoginState] = useState<AuthState>(initialState);
 
   
-  useEffect(() => {
-    if (state.success) {
-      toast({
-          title: "Account Created!",
-          description: state.message || "Please log in to continue.",
-      });
-      router.replace('/auth/login');
-    } else if (state.message) {
-      toast({
-          variant: 'destructive',
-          title: "Signup Failed",
-          description: state.message,
-      });
-    }
-  }, [state, router, toast]);
+  // useEffect(() => {
+  //   if (state.success) {
+  //     toast({
+  //         title: "Account Created!",
+  //         description: state.message || "Please log in to continue.",
+  //     });
+  //     router.replace('/auth/login');
+  //   } else if (state.message) {
+  //     toast({
+  //         variant: 'destructive',
+  //         title: "Signup Failed",
+  //         description: state.message,
+  //     });
+  //   }
+  // }, [state, router, toast]);
 
-    useEffect(() => {
-    if (loginState.success) {
-      toast({
-        title: 'Login Successful!',
-        description: loginState.message,
-      });
-      router.replace('/');
-    } else if (loginState.message) {
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: loginState.message,
-      });
-    }
-  }, [loginState, router, toast]);
+  //   useEffect(() => {
+  //   if (loginState.success) {
+  //     toast({
+  //       title: 'Login Successful!',
+  //       description: loginState.message,
+  //     });
+  //     router.replace('/');
+  //   } else if (loginState.message) {
+  //     toast({
+  //       variant: 'destructive',
+  //       title: 'Login Failed',
+  //       description: loginState.message,
+  //     });
+  //   }
+  // }, [loginState, router, toast]);
 
-  const handleServerLogin = async (idToken: string) => {
-    const result = await login(idToken);
-    setLoginState(result);
-  }
+  // const handleServerLogin = async (idToken: string) => {
+  //   const result = await login(idToken);
+  //   setLoginState(result);
+  // }
 
-  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    startTransition(async () => {
-      await formAction(formData);
-    });
-  }
+  // const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  //   event.preventDefault();
+  //   const formData = new FormData(event.currentTarget);
+  //   startTransition(async () => {
+  //     await formAction(formData);
+  //   });
+  // }
 
-    const handleGoogleSignIn = () => {
-    startTransition(async () => {
-      try {
-        const provider = new GoogleAuthProvider();
-        const userCredential = await signInWithPopup(auth, provider);
-        const idToken = await userCredential.user.getIdToken();
-        await handleServerLogin(idToken);
-      } catch (error: any) {
-        setLoginState({ success: false, message: error.message || 'Google sign-up failed.' });
-      }
-    });
-  };
+  //   const handleGoogleSignIn = () => {
+  //   startTransition(async () => {
+  //     try {
+  //       const provider = new GoogleAuthProvider();
+  //       const userCredential = await signInWithPopup(auth, provider);
+  //       const idToken = await userCredential.user.getIdToken();
+  //       await handleServerLogin(idToken);
+  //     } catch (error: any) {
+  //       setLoginState({ success: false, message: error.message || 'Google sign-up failed.' });
+  //     }
+  //   });
+  // };
   
-  const generateRecaptcha = () => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': (response: any) => {}
-      });
-    }
-  }
+  // const generateRecaptcha = () => {
+  //   if (!window.recaptchaVerifier) {
+  //     window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+  //       'size': 'invisible',
+  //       'callback': (response: any) => {}
+  //     });
+  //   }
+  // }
 
-  const handlePhoneSignIn = (e: React.FormEvent) => {
-    e.preventDefault();
-    startTransition(async () => {
-      setPhoneAuthState('verifying');
-      generateRecaptcha();
-      const appVerifier = window.recaptchaVerifier;
-      try {
-        const result = await signInWithPhoneNumber(auth, `+${phone}`, appVerifier);
-        setConfirmationResult(result);
-        setPhoneAuthState('otp-sent');
-        toast({ title: "OTP Sent!", description: `An OTP has been sent to +${phone}` });
-      } catch (error: any) {
-        setPhoneAuthState('idle');
-        setLoginState({ success: false, message: error.message || "Failed to send OTP." });
-      }
-    });
-  }
+  // const handlePhoneSignIn = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   startTransition(async () => {
+  //     setPhoneAuthState('verifying');
+  //     generateRecaptcha();
+  //     const appVerifier = window.recaptchaVerifier;
+  //     try {
+  //       const result = await signInWithPhoneNumber(auth, `+${phone}`, appVerifier);
+  //       setConfirmationResult(result);
+  //       setPhoneAuthState('otp-sent');
+  //       toast({ title: "OTP Sent!", description: `An OTP has been sent to +${phone}` });
+  //     } catch (error: any) {
+  //       setPhoneAuthState('idle');
+  //       setLoginState({ success: false, message: error.message || "Failed to send OTP." });
+  //     }
+  //   });
+  // }
 
-  const handleOtpVerify = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!confirmationResult) return;
-    startTransition(async () => {
-      try {
-        const userCredential = await confirmationResult.confirm(otp);
-        // Set a default display name for phone users
-        if (userCredential.user && !userCredential.user.displayName) {
-            await updateProfile(userCredential.user, { displayName: `User ${phone.slice(-4)}` });
-        }
-        const idToken = await userCredential.user.getIdToken();
-        await handleServerLogin(idToken);
-      } catch (error: any) {
-         setLoginState({ success: false, message: error.message || "Invalid OTP." });
-      }
-    });
-  }
+  // const handleOtpVerify = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (!confirmationResult) return;
+  //   startTransition(async () => {
+  //     try {
+  //       const userCredential = await confirmationResult.confirm(otp);
+  //       // Set a default display name for phone users
+  //       if (userCredential.user && !userCredential.user.displayName) {
+  //           await updateProfile(userCredential.user, { displayName: `User ${phone.slice(-4)}` });
+  //       }
+  //       const idToken = await userCredential.user.getIdToken();
+  //       await handleServerLogin(idToken);
+  //     } catch (error: any) {
+  //        setLoginState({ success: false, message: error.message || "Invalid OTP." });
+  //     }
+  //   });
+  // }
 
 
   return (
@@ -166,79 +166,22 @@ export default function SignupPage() {
         <CardHeader>
           <CardTitle className="text-2xl text-center">Sign Up</CardTitle>
           <CardDescription className="text-center">
-              Create an account to get started.
+              Sign-ups are temporarily disabled for testing.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          {phoneAuthState === 'idle' ? (
-            <>
-              <form onSubmit={handleFormSubmit} className="grid gap-4">
-                  <div className="grid gap-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input id="email" name="email" type="email" placeholder="m@example.com" required />
-                  </div>
-                  <div className="grid gap-2">
-                      <Label htmlFor="password">Password</Label>
-                      <Input id="password" name="password" type="password" required />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isPending}>
-                    {isPending ? 'Creating Account...' : 'Create an account'}
-                  </Button>
-              </form>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Or continue with
-                  </span>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" onClick={handleGoogleSignIn} disabled={isPending}>
-                  <GoogleIcon className="mr-2 h-5 w-5" />
-                  Google
-                </Button>
-                <Button variant="outline" onClick={() => setPhoneAuthState('verifying')} disabled={isPending}>
-                  <Smartphone className="mr-2 h-5 w-5" />
-                  Phone
-                </Button>
-              </div>
-            </>
-          ) : (
-             <form onSubmit={phoneAuthState === 'otp-sent' ? handleOtpVerify : handlePhoneSignIn} className="grid gap-4">
-                {phoneAuthState === 'verifying' ? (
-                   <div className="grid gap-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" name="phone" type="tel" placeholder="1234567890" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-                     <p className="text-xs text-muted-foreground">Include country code without the `+' symbol.</p>
-                  </div>
-                ) : (
-                  <div className="grid gap-2">
-                    <Label htmlFor="otp">Verification Code</Label>
-                    <Input id="otp" name="otp" type="text" placeholder="123456" value={otp} onChange={(e) => setOtp(e.target.value)} required />
-                  </div>
-                )}
-              <Button type="submit" className="w-full" disabled={isPending}>
-                  {isPending ? 'Verifying...' : (phoneAuthState === 'otp-sent' ? 'Verify OTP & Sign Up' : 'Send OTP')}
-              </Button>
-              <Button variant="link" size="sm" onClick={() => { setPhoneAuthState('idle'); setPhone(''); setOtp(''); }}>
-                Back to other signup methods
-              </Button>
-            </form>
-          )}
+           <div className="text-center text-muted-foreground p-8">
+              Please use the test access to explore the app.
+           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
             <p className="text-center text-sm text-muted-foreground">
               Already have an account?{' '}
-              <Link href="/auth/login" className="underline">
+              <Link href="/auth/login" className="underline text-muted-foreground/50 pointer-events-none">
                 Login
               </Link>
             </p>
         </CardFooter>
-        <div id="recaptcha-container"></div>
       </Card>
   );
 }

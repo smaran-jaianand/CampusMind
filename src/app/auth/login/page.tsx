@@ -69,122 +69,122 @@ export default function LoginPage() {
   const [phoneAuthState, setPhoneAuthState] = useState<'idle' | 'otp-sent' | 'verifying'>('idle');
 
 
-  useEffect(() => {
-    if (state.success) {
-      toast({
-        title: 'Login Successful!',
-        description: state.message,
-      });
-      router.replace('/');
-    } else if (state.message) {
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: state.message,
-      });
-       // Reset state to allow user to try again
-      setState(initialLoginState);
-    }
-  }, [state, router, toast]);
+  // useEffect(() => {
+  //   if (state.success) {
+  //     toast({
+  //       title: 'Login Successful!',
+  //       description: state.message,
+  //     });
+  //     router.replace('/');
+  //   } else if (state.message) {
+  //     toast({
+  //       variant: 'destructive',
+  //       title: 'Login Failed',
+  //       description: state.message,
+  //     });
+  //      // Reset state to allow user to try again
+  //     setState(initialLoginState);
+  //   }
+  // }, [state, router, toast]);
 
-  const handleServerLogin = async (idToken: string) => {
-    const result = await login(idToken);
-    setState(result);
-  }
+  // const handleServerLogin = async (idToken: string) => {
+  //   const result = await login(idToken);
+  //   setState(result);
+  // }
 
-  const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
+  // const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  //   event.preventDefault();
+  //   const formData = new FormData(event.currentTarget);
+  //   const email = formData.get('email') as string;
+  //   const password = formData.get('password') as string;
 
-    startTransition(async () => {
-      try {
-        let userCredential: UserCredential;
+  //   startTransition(async () => {
+  //     try {
+  //       let userCredential: UserCredential;
         
-        try {
-          userCredential = await signInWithEmailAndPassword(auth, email, password);
-        } catch (error: any) {
-          // Special case for admin: create account on first login
-          if (email === 'admin@mannan.app' && error.code === 'auth/user-not-found') {
-             await createUserWithEmailAndPassword(auth, email, password);
-             // After creation, sign in again to get the user credential
-             userCredential = await signInWithEmailAndPassword(auth, email, password);
-          } else {
-            // For all other errors, re-throw to be caught by the outer catch block
-            throw error;
-          }
-        }
+  //       try {
+  //         userCredential = await signInWithEmailAndPassword(auth, email, password);
+  //       } catch (error: any) {
+  //         // Special case for admin: create account on first login
+  //         if (email === 'admin@campusmind.app' && error.code === 'auth/user-not-found') {
+  //            await createUserWithEmailAndPassword(auth, email, password);
+  //            // After creation, sign in again to get the user credential
+  //            userCredential = await signInWithEmailAndPassword(auth, email, password);
+  //         } else {
+  //           // For all other errors, re-throw to be caught by the outer catch block
+  //           throw error;
+  //         }
+  //       }
         
-        const idToken = await userCredential.user.getIdToken();
-        await handleServerLogin(idToken);
+  //       const idToken = await userCredential.user.getIdToken();
+  //       await handleServerLogin(idToken);
 
-      } catch (error: any) {
-        const defaultMessage = 'An unknown error occurred.';
-        const message = error.code === 'auth/invalid-credential' 
-          ? 'Invalid email or password.'
-          : error.message || defaultMessage;
+  //     } catch (error: any) {
+  //       const defaultMessage = 'An unknown error occurred.';
+  //       const message = error.code === 'auth/invalid-credential' 
+  //         ? 'Invalid email or password.'
+  //         : error.message || defaultMessage;
         
-        setState({ success: false, message });
-      }
-    });
-  };
+  //       setState({ success: false, message });
+  //     }
+  //   });
+  // };
 
-  const handleGoogleSignIn = () => {
-    startTransition(async () => {
-      try {
-        const provider = new GoogleAuthProvider();
-        const userCredential = await signInWithPopup(auth, provider);
-        const idToken = await userCredential.user.getIdToken();
-        await handleServerLogin(idToken);
-      } catch (error: any) {
-        setState({ success: false, message: error.message || 'Google sign-in failed.' });
-      }
-    });
-  };
+  // const handleGoogleSignIn = () => {
+  //   startTransition(async () => {
+  //     try {
+  //       const provider = new GoogleAuthProvider();
+  //       const userCredential = await signInWithPopup(auth, provider);
+  //       const idToken = await userCredential.user.getIdToken();
+  //       await handleServerLogin(idToken);
+  //     } catch (error: any) {
+  //       setState({ success: false, message: error.message || 'Google sign-in failed.' });
+  //     }
+  //   });
+  // };
   
-  const generateRecaptcha = () => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': (response: any) => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-        }
-      });
-    }
-  }
+  // const generateRecaptcha = () => {
+  //   if (!window.recaptchaVerifier) {
+  //     window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+  //       'size': 'invisible',
+  //       'callback': (response: any) => {
+  //         // reCAPTCHA solved, allow signInWithPhoneNumber.
+  //       }
+  //     });
+  //   }
+  // }
 
-  const handlePhoneSignIn = (e: React.FormEvent) => {
-    e.preventDefault();
-    startTransition(async () => {
-      setPhoneAuthState('verifying');
-      generateRecaptcha();
-      const appVerifier = window.recaptchaVerifier;
-      try {
-        const result = await signInWithPhoneNumber(auth, `+${phone}`, appVerifier);
-        setConfirmationResult(result);
-        setPhoneAuthState('otp-sent');
-        toast({ title: "OTP Sent!", description: `An OTP has been sent to +${phone}` });
-      } catch (error: any) {
-        setPhoneAuthState('idle');
-        setState({ success: false, message: error.message || "Failed to send OTP." });
-      }
-    });
-  }
+  // const handlePhoneSignIn = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   startTransition(async () => {
+  //     setPhoneAuthState('verifying');
+  //     generateRecaptcha();
+  //     const appVerifier = window.recaptchaVerifier;
+  //     try {
+  //       const result = await signInWithPhoneNumber(auth, `+${phone}`, appVerifier);
+  //       setConfirmationResult(result);
+  //       setPhoneAuthState('otp-sent');
+  //       toast({ title: "OTP Sent!", description: `An OTP has been sent to +${phone}` });
+  //     } catch (error: any) {
+  //       setPhoneAuthState('idle');
+  //       setState({ success: false, message: error.message || "Failed to send OTP." });
+  //     }
+  //   });
+  // }
 
-  const handleOtpVerify = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!confirmationResult) return;
-    startTransition(async () => {
-      try {
-        const userCredential = await confirmationResult.confirm(otp);
-        const idToken = await userCredential.user.getIdToken();
-        await handleServerLogin(idToken);
-      } catch (error: any) {
-         setState({ success: false, message: error.message || "Invalid OTP." });
-      }
-    });
-  }
+  // const handleOtpVerify = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (!confirmationResult) return;
+  //   startTransition(async () => {
+  //     try {
+  //       const userCredential = await confirmationResult.confirm(otp);
+  //       const idToken = await userCredential.user.getIdToken();
+  //       await handleServerLogin(idToken);
+  //     } catch (error: any) {
+  //        setState({ success: false, message: error.message || "Invalid OTP." });
+  //     }
+  //   });
+  // }
 
 
   return (
@@ -192,81 +192,22 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle className="text-2xl text-center">Login</CardTitle>
           <CardDescription className="text-center">
-            Choose a login method to access your account.
+            Logins are temporarily disabled for testing.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          {phoneAuthState === 'idle' && (
-            <>
-              <form onSubmit={handleFormSubmit} className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" name="email" type="email" placeholder="m@example.com" required />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input id="password" name="password" type="password" required />
-                </div>
-                <Button type="submit" className="w-full" disabled={isPending}>
-                    {isPending ? 'Logging In...' : 'Login with Email'}
-                </Button>
-              </form>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" onClick={handleGoogleSignIn} disabled={isPending}>
-                  <GoogleIcon className="mr-2 h-5 w-5" />
-                  Google
-                </Button>
-                <Button variant="outline" onClick={() => setPhoneAuthState('verifying')} disabled={isPending}>
-                  <Smartphone className="mr-2 h-5 w-5" />
-                  Phone
-                </Button>
-              </div>
-            </>
-          )}
-
-          {phoneAuthState !== 'idle' && (
-             <form onSubmit={phoneAuthState === 'otp-sent' ? handleOtpVerify : handlePhoneSignIn} className="grid gap-4">
-                {phoneAuthState === 'verifying' ? (
-                   <div className="grid gap-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" name="phone" type="tel" placeholder="1234567890" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-                    <p className="text-xs text-muted-foreground">Include country code without the `+' symbol.</p>
-                  </div>
-                ) : (
-                  <div className="grid gap-2">
-                    <Label htmlFor="otp">Verification Code</Label>
-                    <Input id="otp" name="otp" type="text" placeholder="123456" value={otp} onChange={(e) => setOtp(e.target.value)} required />
-                  </div>
-                )}
-              <Button type="submit" className="w-full" disabled={isPending}>
-                  {isPending ? 'Verifying...' : (phoneAuthState === 'otp-sent' ? 'Verify OTP' : 'Send OTP')}
-              </Button>
-              <Button variant="link" size="sm" onClick={() => { setPhoneAuthState('idle'); setPhone(''); setOtp(''); }}>
-                Back to other login methods
-              </Button>
-            </form>
-          )}
-
+           <div className="text-center text-muted-foreground p-8">
+              You can access all application features without logging in.
+           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
           <p className="text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{' '}
-            <Link href="/auth/signup" className="underline">
+            <Link href="/auth/signup" className="underline text-muted-foreground/50 pointer-events-none">
               Sign up
             </Link>
           </p>
         </CardFooter>
-        <div id="recaptcha-container"></div>
       </Card>
   );
 }
