@@ -23,9 +23,11 @@ export function middleware(request: NextRequest) {
   }
 
   // If trying to access a protected page while not logged in, redirect to login
+  /* // Temporarily disabled for testing
   if (!sessionCookie && protectedRoutes.includes(pathname)) {
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
+  */
 
   return NextResponse.next();
 }

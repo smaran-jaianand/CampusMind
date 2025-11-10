@@ -10,6 +10,16 @@ interface AuthContextType {
   loading: boolean;
 }
 
+// Mock user for testing purposes when auth is disabled
+const mockUser = {
+  uid: 'test-user-123',
+  email: 'tester@mannan.app',
+  displayName: 'Test User',
+  photoURL: 'https://picsum.photos/seed/test-user/40/40',
+  // Add other User properties if your app needs them
+} as User;
+
+
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -19,12 +29,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (auth) {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
-        setUser(user);
+        // When testing without logins, if there's no real user, use the mock user.
+        if (!user) {
+          console.log("No real user found, using mock user for testing.");
+          setUser(mockUser);
+        } else {
+          setUser(user);
+        }
         setLoading(false);
       });
       return () => unsubscribe();
     } else {
-      // If firebase is not configured, we are not loading and there is no user.
+      // If firebase is not configured, use the mock user.
+       console.log("Firebase not configured, using mock user for testing.");
+      setUser(mockUser);
       setLoading(false);
     }
   }, []);
